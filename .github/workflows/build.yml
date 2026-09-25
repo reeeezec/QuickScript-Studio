@@ -2,7 +2,7 @@ name: Build Windows Executable
 
 # Trigger matrix:
 #   * every push to main
-#   * every tag matching v* (e.g. v2.0.0) -> also publishes a GitHub Release
+#   * every tag matching v* (e.g. v0.1.0) -> also publishes a GitHub Release
 #   * manual runs from the Actions tab
 on:
   push:
@@ -79,14 +79,19 @@ jobs:
           else { Write-Error "Self-checks FAILED (exit code $rc)."; exit $rc }
 
       - name: Build executable with PyInstaller
-        # The build is driven by QuickScriptStudio.spec so that CI and a local
-        # `打包exe.bat` produce byte-for-byte equivalent output. The spec pins:
-        #   * onefile mode      - matches the documented "just run the exe" flow
-        #   * console=False     - Tk GUI app, no black console window
-        #   * entry point qs.py - quickscript/__main__.py uses relative imports
-        #                         and cannot be executed as a top-level script
-        #   * upx=False         - compressed binaries trigger antivirus flags
-        #   * excludes          - numpy/PIL/cv2 etc. are deliberately unused
+        # The build is driven by dev/QuickScriptStudio.spec so that CI and a
+        # local `dev/打包exe.bat` produce equivalent output. The spec pins:
+        #   * onefile mode        - matches the documented "just run the exe" flow
+        #   * console=False       - Tk GUI app, no black console window
+        #   * entry point dev/qs.py - quickscript/__main__.py uses relative
+        #                           imports and cannot be executed as a
+        #                           top-level script, hence the thin wrapper
+        #   * upx=False           - compressed binaries trigger antivirus flags
+        #   * excludes            - numpy/PIL/cv2 etc. are deliberately unused
+        #
+        # The spec locates everything relative to SPECPATH, so it works no
+        # matter which directory PyInstaller is invoked from. Output still
+        # lands in dist/ at the repository root.
         #
         # Keeping the command on a single line is deliberate: the default shell
         # for `run:` on Windows runners is PowerShell, where `^` is NOT a line
@@ -135,11 +140,17 @@ jobs:
         shell: pwsh
         run: |
           # Ship the exe together with the docs users actually need.
+          #
+          # Deliberately NOT included:
+          #   * 以管理员身份启动.bat - it invokes dev/run_admin.py, which is a
+          #     development launcher and is not part of this archive, so the
+          #     script would fail with "dev\run_admin.py is missing".
+          #     exe users elevate via right-click -> "Run as administrator",
+          #     which is what the README documents.
+          #   * qs.py - the source entry point; irrelevant to exe users.
           New-Item -ItemType Directory -Path package -Force | Out-Null
           Copy-Item dist/QuickScriptStudio.exe package/
           Copy-Item README.md, LICENSE, CHANGELOG.md package/
-          Copy-Item 以管理员身份启动.bat package/ -ErrorAction SilentlyContinue
-          Copy-Item qs.py package/ -ErrorAction SilentlyContinue
           Compress-Archive -Path "package/*" `
             -DestinationPath "dist/QuickScriptStudio-${{ github.ref_name }}-windows-x64.zip" `
             -Force
@@ -150,9 +161,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: QuickScript Studio ${{ github.ref_name }}
-          generate_release_notes: true
+          # Hand-written notes per release, kept in the repository so the
+          # wording is reviewable in a pull request instead of being
+          # generated at publish time.
+          #
+          # NOTE: a release notes file MUST exist for the tag being pushed
+          # (e.g. .github/release-notes/v0.1.0.md), otherwise this step
+          # fails and no release is published.
+          body_path: .github/release-notes/${{ github.ref_name }}.md
+          generate_release_notes: false
           draft: false
-          # A tag such as v2.1.0-rc1 is published as a pre-release.
+          # A tag such as v0.2.0-rc1 is published as a pre-release.
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             dist/QuickScriptStudio-${{ github.ref_name }}-windows-x64.zip
