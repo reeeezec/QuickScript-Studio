@@ -74,9 +74,23 @@ jobs:
           python tests/run_all.py
           $rc = $LASTEXITCODE
           Write-Host "tests/run_all.py exit code: $rc"
-          if ($rc -eq 0) { Write-Host "All self-checks passed." }
-          elseif ($rc -eq 2) { Write-Host "Self-checks passed with environment-related skips." }
-          else { Write-Error "Self-checks FAILED (exit code $rc)."; exit $rc }
+          if ($rc -eq 0) {
+            Write-Host "All self-checks passed."
+          }
+          elseif ($rc -eq 2) {
+            Write-Host "Self-checks passed with environment-related skips."
+          }
+          else {
+            Write-Error "Self-checks FAILED (exit code $rc)."
+            exit $rc
+          }
+          # `exit 0` is required, not cosmetic: the runner derives the step's
+          # status from the script's exit code, and after a native command
+          # PowerShell leaves $LASTEXITCODE set to that command's code. Without
+          # this, a legitimate rc=2 (passed, some suites skipped for
+          # environment reasons) leaks out as the step's exit code and the
+          # build is marked failed even though every suite passed.
+          exit 0
 
       - name: Build executable with PyInstaller
         # The build is driven by dev/QuickScriptStudio.spec so that CI and a
