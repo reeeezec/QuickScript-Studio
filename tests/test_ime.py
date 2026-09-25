@@ -30,12 +30,23 @@ from quickscript.platform import wininput as wi
 
 wi.enable_dpi_awareness()
 
-PASS, FAIL = [], []
+PASS, FAIL, SKIP = [], [], []
 
 
 def check(name, cond, detail=""):
     (PASS if cond else FAIL).append((name, detail))
     print("  [%s] %s   %s" % ("OK  " if cond else "FAIL", name, detail))
+
+
+def skip(name, detail=""):
+    """环境不满足时跳过，而不是判失败。
+
+    例如英文版 Windows（含 GitHub Actions runner）根本没装中文输入法，
+    无法建立"按键被输入法吞掉"的场景。这不是本程序的缺陷，
+    应当与 tests/run_all.py 的 exit code 2（环境性跳过）语义一致。
+    """
+    SKIP.append((name, detail))
+    print("  [SKIP] %s   %s" % (name, detail))
 
 
 TMP = os.path.join(tempfile.gettempdir(), "quickscript_ime")
@@ -148,8 +159,16 @@ def main():
         # 1) 建立问题场景：切到中文
         print("步骤1：把目标窗口切到中文输入法")
         got_cn = force_chinese()
-        check("能建立中文输入法场景（用于复现问题）", got_cn,
-              "当前布局 0x%04X" % wi.window_layout_id(HWND))
+        if got_cn:
+            check("能建立中文输入法场景（用于复现问题）", True)
+        else:
+            # 英文版 Windows（包括 GitHub Actions 的 windows-latest runner）
+            # 没有安装中文输入法，无法复现"按键被吞"的场景。
+            # 这是环境限制而非缺陷，跳过而不是失败 —— 与 run_all.py 的
+            # "环境跳过"(exit code 2) 语义保持一致。
+            skip("能建立中文输入法场景（用于复现问题）",
+                 "本机未安装中文输入法（布局 0x%04X），无法复现该场景"
+                 % wi.window_layout_id(HWND))
 
         if got_cn:
             print("步骤2：中文布局下注入按键（预期被吞）")
@@ -191,12 +210,19 @@ def main():
         shutil.rmtree(TMP, ignore_errors=True)
 
     print("\n" + "=" * 62)
-    print("通过 %d 项，失败 %d 项" % (len(PASS), len(FAIL)))
+    print("通过 %d 项，失败 %d 项，跳过 %d 项" % (len(PASS), len(FAIL), len(SKIP)))
     for n, d in FAIL:
         print("  · %s   %s" % (n, d))
-    if not FAIL:
+    for n, d in SKIP:
+        print("  - %s：%s" % (n, d))
+    if not FAIL and SKIP:
+        print("输入法修复验证通过（有环境性跳过）✓")
+    elif not FAIL:
         print("输入法修复验证通过 ✓")
-    return 1 if FAIL else 0
+    # 0 = 全过；1 = 有真实失败；2 = 无失败但有环境性跳过（与 run_all.py 一致）
+    if FAIL:
+        return 1
+    return 2 if SKIP else 0
 
 
 if __name__ == "__main__":
