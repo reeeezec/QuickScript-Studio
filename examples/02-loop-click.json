@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "name": "02-循环点击",
+  "target": {
+    "coord_mode": "window",
+    "window_title": "",
+    "window_match": "contains",
+    "window_class": "",
+    "bring_to_front": true,
+    "use_fixed_origin": false,
+    "origin_x": 0,
+    "origin_y": 0
+  },
+  "settings": {
+    "start_delay": 2.0,
+    "hold_jitter": 0.01,
+    "delay_jitter": 0.08,
+    "move_after_click": 0.05
+  },
+  "steps": [
+    {
+      "type": "label",
+      "note": "循环入口",
+      "name": "循环入口"
+    },
+    {
+      "type": "loop_begin",
+      "note": "重复 10 次；改成 0 就是一直循环（F10 停止）",
+      "times": 10
+    },
+    {
+      "type": "move",
+      "note": "移到目标点（坐标需按你的窗口重新拾取）",
+      "x": 200,
+      "y": 200,
+      "duration": 0.2,
+      "jitter": 2
+    },
+    {
+      "type": "click",
+      "note": "点一下",
+      "x": 200,
+      "y": 200,
+      "button": "left",
+      "hold": 0.06,
+      "clicks": 1,
+      "interval": 0.08,
+      "move_time": 0
+    },
+    {
+      "type": "delay",
+      "note": "间隔，带随机量让节奏自然些",
+      "seconds": 0.8,
+      "random": 0.2
+    },
+    {
+      "type": "loop_end",
+      "note": ""
+    },
+    {
+      "type": "stop",
+      "note": "结束"
+    }
+  ],
+  "comment": "循环与等待：重复点击固定位置 10 次，演示循环与随机间隔。"
+}

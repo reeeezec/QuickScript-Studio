@@ -1,0 +1,49 @@
+{
+  "version": 2,
+  "name": "06-屏幕绝对坐标",
+  "target": {
+    "coord_mode": "screen",
+    "window_title": "",
+    "window_match": "contains",
+    "window_class": "",
+    "bring_to_front": true,
+    "use_fixed_origin": false,
+    "origin_x": 0,
+    "origin_y": 0
+  },
+  "settings": {
+    "start_delay": 1.5,
+    "hold_jitter": 0.0,
+    "delay_jitter": 0.0,
+    "move_after_click": 0.0
+  },
+  "steps": [
+    {
+      "type": "move",
+      "note": "屏幕绝对坐标：直接给屏幕像素位置",
+      "x": 960,
+      "y": 540,
+      "duration": 0.25,
+      "jitter": 1
+    },
+    {
+      "type": "click",
+      "note": "在屏幕中心点一下",
+      "x": 960,
+      "y": 540,
+      "button": "left",
+      "hold": 0.06,
+      "clicks": 1,
+      "interval": 0.08,
+      "move_time": 0
+    },
+    {
+      "type": "wheel",
+      "note": "向下滚 3 格",
+      "amount": -3,
+      "times": 1,
+      "interval": 0.05
+    }
+  ],
+  "comment": "屏幕绝对坐标模式：不绑定窗口，直接使用屏幕像素位置。"
+}

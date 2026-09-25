@@ -1,0 +1,65 @@
+# =============================================================================
+# .gitignore — QuickScript Studio (Windows / Python 3.8+, stdlib only)
+# =============================================================================
+# NOTE: `examples/` is intentionally NOT ignored — the bundled example scripts
+# are part of the repository and are shipped with the project.
+# =============================================================================
+
+# --- Python bytecode & caches ------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# --- Virtual environments ----------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# --- Build / packaging output ------------------------------------------------
+build/
+dist/
+*.exe
+*.pdb
+*.manifest
+
+# PyInstaller writes ad-hoc *.spec files next to whatever it is pointed at.
+# Those are throwaway, but the project's OWN spec is the canonical build
+# definition used by both `打包exe.bat` and GitHub Actions — it MUST be
+# committed. The negation below re-includes it after the wildcard.
+*.spec
+!QuickScriptStudio.spec
+
+# --- Test tooling caches -----------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Runtime data (user scripts, settings, logs) -----------------------------
+# Generated locally at runtime; never commit user data.
+data/
+# Launcher log, written by run_admin.py (already covered by `data/`, listed
+# explicitly so the intent is obvious).
+data/launch.log
+
+# --- Test artifacts ----------------------------------------------------------
+# Screenshots captured by the GUI and end-to-end self-checks. Both the legacy
+# top-level folder and the one the current test suite writes to.
+screenshots/
+tests/screenshots/
+
+# --- Editors & IDEs ----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini

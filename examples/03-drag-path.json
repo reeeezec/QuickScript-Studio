@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "03-拖动轨迹",
+  "target": {
+    "coord_mode": "window",
+    "window_title": "画图",
+    "window_match": "contains",
+    "window_class": "",
+    "bring_to_front": true,
+    "use_fixed_origin": false,
+    "origin_x": 0,
+    "origin_y": 0
+  },
+  "settings": {
+    "start_delay": 2.0,
+    "hold_jitter": 0.0,
+    "delay_jitter": 0.0,
+    "move_after_click": 0.0
+  },
+  "steps": [
+    {
+      "type": "move",
+      "note": "先移到画布起点",
+      "x": 200,
+      "y": 200,
+      "duration": 0.2,
+      "jitter": 0
+    },
+    {
+      "type": "drag",
+      "note": "从左上拖到右下",
+      "x1": 200,
+      "y1": 200,
+      "x2": 600,
+      "y2": 450,
+      "button": "left",
+      "duration": 0.6,
+      "steps": 40,
+      "jitter": 0
+    },
+    {
+      "type": "delay",
+      "note": "",
+      "seconds": 0.3,
+      "random": 0
+    },
+    {
+      "type": "drag",
+      "note": "再画一条反方向的",
+      "x1": 600,
+      "y1": 450,
+      "x2": 200,
+      "y2": 200,
+      "button": "left",
+      "duration": 0.6,
+      "steps": 40,
+      "jitter": 0
+    }
+  ],
+  "comment": "拖动轨迹：从一点沿路径拖到另一点，演示平滑拖动与步数控制。"
+}

@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "name": "04-条件分支-找色",
+  "target": {
+    "coord_mode": "window",
+    "window_title": "",
+    "window_match": "contains",
+    "window_class": "",
+    "bring_to_front": true,
+    "use_fixed_origin": false,
+    "origin_x": 0,
+    "origin_y": 0
+  },
+  "settings": {
+    "start_delay": 1.5,
+    "hold_jitter": 0.0,
+    "delay_jitter": 0.0,
+    "move_after_click": 0.0
+  },
+  "steps": [
+    {
+      "type": "label",
+      "note": "重试入口",
+      "name": "重试"
+    },
+    {
+      "type": "click",
+      "note": "点一下触发按钮",
+      "x": 400,
+      "y": 500,
+      "button": "left",
+      "hold": 0.06,
+      "clicks": 1,
+      "interval": 0.08,
+      "move_time": 0.15
+    },
+    {
+      "type": "delay",
+      "note": "等状态变化",
+      "seconds": 1.0,
+      "random": 0.2
+    },
+    {
+      "type": "if_color",
+      "note": "状态指示变绿就继续，否则回到重试",
+      "x": 120,
+      "y": 340,
+      "color": "#4CAF50",
+      "tol": 12,
+      "on_success": "continue",
+      "success_label": "",
+      "on_fail": "goto",
+      "fail_label": "重试"
+    },
+    {
+      "type": "key",
+      "note": "成功后的动作",
+      "keys": "enter",
+      "hold": 0.05,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    },
+    {
+      "type": "stop",
+      "note": ""
+    }
+  ],
+  "comment": "条件分支：用找色判断状态，未命中就跳回标签重试。"
+}

@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "name": "05-键盘按住与连发",
+  "target": {
+    "coord_mode": "window",
+    "window_title": "",
+    "window_match": "contains",
+    "window_class": "",
+    "bring_to_front": true,
+    "use_fixed_origin": false,
+    "origin_x": 0,
+    "origin_y": 0
+  },
+  "settings": {
+    "start_delay": 1.5,
+    "hold_jitter": 0.01,
+    "delay_jitter": 0.05,
+    "move_after_click": 0.0
+  },
+  "steps": [
+    {
+      "type": "click",
+      "note": "先让目标窗口获得焦点",
+      "x": 300,
+      "y": 300,
+      "button": "left",
+      "hold": 0.06,
+      "clicks": 1,
+      "interval": 0.08,
+      "move_time": 0.15
+    },
+    {
+      "type": "delay",
+      "note": "",
+      "seconds": 0.3,
+      "random": 0
+    },
+    {
+      "type": "key",
+      "note": "连发 5 次空格",
+      "keys": "space",
+      "hold": 0.05,
+      "times": 5,
+      "interval": 0.12,
+      "no_release": false
+    },
+    {
+      "type": "delay",
+      "note": "",
+      "seconds": 0.3,
+      "random": 0
+    },
+    {
+      "type": "key_down",
+      "note": "按住 Shift",
+      "keys": "shift"
+    },
+    {
+      "type": "key",
+      "note": "按住期间发方向键",
+      "keys": "right",
+      "hold": 0.04,
+      "times": 3,
+      "interval": 0.1,
+      "no_release": false
+    },
+    {
+      "type": "key_up",
+      "note": "松开 Shift",
+      "keys": "shift"
+    },
+    {
+      "type": "key",
+      "note": "组合键示例",
+      "keys": "ctrl+shift+s",
+      "hold": 0.05,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    }
+  ],
+  "comment": "键盘操作：连发、按住不放、组合键。"
+}

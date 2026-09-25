@@ -1,0 +1,159 @@
+name: Build Windows Executable
+
+# Trigger matrix:
+#   * every push to main
+#   * every tag matching v* (e.g. v2.0.0) -> also publishes a GitHub Release
+#   * manual runs from the Actions tab
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+# The release step needs to write release assets back to the repository.
+permissions:
+  contents: write
+
+# Avoid two concurrent builds fighting over the same release tag.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Package (Windows / Python ${{ matrix.python-version }})
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Single supported target: the tool relies on the Win32 SendInput API
+        # and on tkinter, both of which are stable on CPython 3.12 for Windows.
+        python-version: ['3.12']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install build dependency (PyInstaller only)
+        # The application itself is stdlib-only by design. PyInstaller is used
+        # exclusively to produce the distributable executable.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+
+      - name: Report environment
+        run: |
+          python --version
+          python -c "import tkinter, ctypes, zlib, json; print('stdlib imports OK')"
+          python -m PyInstaller --version
+
+      - name: Run self-checks
+        # This project does NOT use pytest. It ships its own self-check suites
+        # (unit self-check, GUI self-check, cross-process end-to-end real-input
+        # verification, IME fix verification, launch-chain verification),
+        # aggregated by tests/run_all.py. See the README "Testing" section.
+        #
+        # run_all.py exit codes: 0 = all passed, 2 = all passed but some suites
+        # were skipped due to environment limits (e.g. no interactive desktop),
+        # anything else = a real failure. Treat 0 and 2 as success so a headless
+        # runner does not fail spuriously, while still never accepting a
+        # layout change that silently runs nothing.
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'tests/run_all.py')) {
+            Write-Error "tests/run_all.py not found - refusing to report a green build that ran no tests."
+            exit 1
+          }
+          python tests/run_all.py
+          $rc = $LASTEXITCODE
+          Write-Host "tests/run_all.py exit code: $rc"
+          if ($rc -eq 0) { Write-Host "All self-checks passed." }
+          elseif ($rc -eq 2) { Write-Host "Self-checks passed with environment-related skips." }
+          else { Write-Error "Self-checks FAILED (exit code $rc)."; exit $rc }
+
+      - name: Build executable with PyInstaller
+        # The build is driven by QuickScriptStudio.spec so that CI and a local
+        # `打包exe.bat` produce byte-for-byte equivalent output. The spec pins:
+        #   * onefile mode      - matches the documented "just run the exe" flow
+        #   * console=False     - Tk GUI app, no black console window
+        #   * entry point qs.py - quickscript/__main__.py uses relative imports
+        #                         and cannot be executed as a top-level script
+        #   * upx=False         - compressed binaries trigger antivirus flags
+        #   * excludes          - numpy/PIL/cv2 etc. are deliberately unused
+        #
+        # Keeping the command on a single line is deliberate: the default shell
+        # for `run:` on Windows runners is PowerShell, where `^` is NOT a line
+        # continuation character (that is cmd.exe syntax) and would be passed
+        # through to PyInstaller as a stray argument.
+        run: python -m PyInstaller --noconfirm --clean dev/QuickScriptStudio.spec
+
+      - name: Verify the build output
+        shell: pwsh
+        run: |
+          $exe = "dist/QuickScriptStudio.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "Expected executable not found: $exe"
+            exit 1
+          }
+          $item = Get-Item $exe
+          Get-Item $exe | Format-List Name, Length, LastWriteTime
+          if ($item.Length -lt 3MB) {
+            Write-Error "Executable looks too small ($($item.Length) bytes) - the bundle is probably incomplete."
+            exit 1
+          }
+
+      - name: Smoke-test the executable
+        # The exe is built with console=False, so it cannot print to stdout.
+        # Instead, assert that it starts and exits cleanly when asked for its
+        # version (the process exit code is still observable).
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist/QuickScriptStudio.exe" -ArgumentList "--version" -PassThru -Wait
+          Write-Host "exit code: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) {
+            Write-Error "Executable smoke test failed with exit code $($p.ExitCode)."
+            exit 1
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickScriptStudio-${{ github.ref_name || github.sha }}-windows-x64
+          path: dist/QuickScriptStudio.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Archive the build for the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          # Ship the exe together with the docs users actually need.
+          New-Item -ItemType Directory -Path package -Force | Out-Null
+          Copy-Item dist/QuickScriptStudio.exe package/
+          Copy-Item README.md, LICENSE, CHANGELOG.md package/
+          Copy-Item 以管理员身份启动.bat package/ -ErrorAction SilentlyContinue
+          Copy-Item qs.py package/ -ErrorAction SilentlyContinue
+          Compress-Archive -Path "package/*" `
+            -DestinationPath "dist/QuickScriptStudio-${{ github.ref_name }}-windows-x64.zip" `
+            -Force
+          Get-ChildItem dist | Format-Table Name, Length
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: QuickScript Studio ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          # A tag such as v2.1.0-rc1 is published as a pre-release.
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            dist/QuickScriptStudio-${{ github.ref_name }}-windows-x64.zip
+          fail_on_unmatched_files: true

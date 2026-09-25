@@ -1,0 +1,97 @@
+{
+  "version": 2,
+  "name": "01-notepad-input",
+  "target": {
+    "coord_mode": "window",
+    "window_title": "记事本",
+    "window_match": "contains",
+    "window_class": "",
+    "bring_to_front": true,
+    "use_fixed_origin": false,
+    "origin_x": 0,
+    "origin_y": 0
+  },
+  "settings": {
+    "start_delay": 1.5,
+    "hold_jitter": 0.01,
+    "delay_jitter": 0.05,
+    "move_after_click": 0.0
+  },
+  "steps": [
+    {
+      "type": "click",
+      "note": "点一下编辑区，让它获得焦点",
+      "x": 300,
+      "y": 300,
+      "button": "left",
+      "hold": 0.06,
+      "clicks": 1,
+      "interval": 0.08,
+      "move_time": 0.15
+    },
+    {
+      "type": "delay",
+      "note": "等窗口响应",
+      "seconds": 0.4,
+      "random": 0.1
+    },
+    {
+      "type": "key",
+      "note": "全选已有内容",
+      "keys": "ctrl+a",
+      "hold": 0.05,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    },
+    {
+      "type": "delay",
+      "note": "",
+      "seconds": 0.2,
+      "random": 0
+    },
+    {
+      "type": "key",
+      "note": "输入三个字母（keys 是按键名，不是文本）",
+      "keys": "a",
+      "hold": 0.03,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    },
+    {
+      "type": "key",
+      "note": "再按一次 b",
+      "keys": "b",
+      "hold": 0.03,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    },
+    {
+      "type": "key",
+      "note": "按空格",
+      "keys": "space",
+      "hold": 0.03,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    },
+    {
+      "type": "delay",
+      "note": "",
+      "seconds": 0.3,
+      "random": 0
+    },
+    {
+      "type": "key",
+      "note": "换行",
+      "keys": "enter",
+      "hold": 0.05,
+      "times": 1,
+      "interval": 0.1,
+      "no_release": false
+    }
+  ],
+  "comment": "最小可用示例：点击输入区并输入一段文字。用于快速验证环境是否正常。"
+}

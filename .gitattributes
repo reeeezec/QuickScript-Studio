@@ -1,0 +1,62 @@
+# =============================================================================
+# .gitattributes — QuickScript Studio
+# =============================================================================
+# Why this file exists
+# --------------------
+# The repository contains .bat launchers (including Chinese-named ones) that use
+# multi-line `if (` / `for (` blocks. cmd.exe parses batch files by byte offset
+# and its handling of block boundaries is line-ending sensitive; the scripts also
+# currently ship with LF endings while git's default `core.autocrlf=true` on
+# Windows would rewrite them to CRLF on checkout. That mismatch means a fresh
+# clone can behave differently from the machine the scripts were tested on.
+#
+# Pinning the endings here makes every clone byte-identical regardless of the
+# user's git configuration. CRLF is the conventional choice for .bat.
+# =============================================================================
+
+# --- Normalise everything to LF in the repository -----------------------------
+* text=auto eol=lf
+
+# --- Windows batch files MUST stay CRLF --------------------------------------
+# (cmd.exe conventions; also keeps `goto`-target offsets stable.)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# --- PowerShell scripts -------------------------------------------------------
+*.ps1 text eol=crlf
+
+# --- Python and docs: LF is fine everywhere ----------------------------------
+*.py    text eol=lf
+*.pyi   text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.txt   text eol=lf
+
+# --- Binary assets: never touched by line-ending conversion -------------------
+*.exe   binary
+*.ico   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.bmp   binary
+*.zip   binary
+*.pyc   binary
+
+# --- Keep diffs readable ------------------------------------------------------
+# Treat the generated/vendored material as non-diffable so it never shows up as
+# a wall of text in reviews.
+build/**  -diff
+dist/**   -diff
+*.ico     -diff
+
+# --- Language statistics ------------------------------------------------------
+# Without this, .bat files can dominate the "languages" bar on the repo page
+# even though they are a tiny part of the project.
+*.bat   linguist-language=Batchfile
+*.spec  linguist-language=Python
+docs/** linguist-documentation
