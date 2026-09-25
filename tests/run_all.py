@@ -19,6 +19,25 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(HERE)
 
+
+def _relax_console_encoding():
+    """让本脚本在非 UTF-8 控制台下也能打印中文。
+
+    GitHub Actions 的 windows-latest runner 控制台是 cp1252（英文 Windows），
+    打印中文会抛 UnicodeEncodeError，导致「测试全过但脚本自己崩了」。
+    其他测试套件早已这样处理，这个总入口此前漏掉了。
+
+    errors="replace" 只是把打不出的字符换成 "?"，不影响测试结果判断。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except Exception:
+            pass
+
+
+_relax_console_encoding()
+
 # 套件名 -> (脚本文件, 说明)
 SUITES = {
     "units": ("test_units.py", "单元自检：结构体/按键/图像/序列化/引擎逻辑/权限"),
